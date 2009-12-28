@@ -92,3 +92,60 @@ class ActionValueNetwork(Module, ActionValueInterface):
 
     def getValue(self, state, action):
         return self.network.activate(r_[state, one_to_n(action, self.numActions)])
+
+
+class PolicyValueNetwork(Module, ActionValueInterface):
+    """ A complex network taking state and mapping it to action (policy) and
+        mapping state AND action to a scalar (value estimator). This type of
+        network is required for value-based continuous state / continuous 
+        action RL algorithms, like NFQCA. """
+       
+    def __init__(self, dimState, dimAction, name=None):
+        Module.__init__(self, dimState, dimAction, name)
+        
+        ### TODO: possibly 2 seperate networks, because they need to be trained seperately
+        ### (first Q-net, then policy-net)
+        
+        # construct complex network
+        self.network = FeedForwardNetwork()
+        self.network.addInputModule(LinearLayer(dimState, name='state'))
+        self.network.addModule(TanhLayer(dimState, name='policy_hidden'))
+        self.network.addModule(BiasUnit('bias'))
+        self.network.addModule(TanhLayer(dimAction, name='action'))
+        self.network.addModule(TanhLayer(dimState+dimAction, name='value_hidden'))
+        self.network.addOutputModule(TanhLayer(1, name='value'))
+        
+        # define connections
+        self.network.addConnection(FullConnection(self.network['state'], self.network['policy_hidden']))
+        self.network.addConnection(FullConnection(self.network['bias'], self.network['policy_hidden']))
+        self.network.addConnection(FullConnection(self.network['policy_hidden'], self.network['action']))
+        self.network.addConnection(FullConnection(self.network['bias'], self.network['action']))
+        self.network.addConnection(FullConnection(self.network['state'], self.network['value_hidden']))
+        self.network.addConnection(FullConnection(self.network['action'], self.network['value_hidden']))
+        self.network.addConnection(FullConnection(self.network['bias'], self.network['value_hidden']))
+        self.network.addConnection(FullConnection(self.network['value_hidden'], self.network['value']))
+        self.network.addConnection(FullConnection(self.network['bias'], self.network['value']))
+        
+        # sort modules
+        self.network.sortModules()
+        
+        
+    def _forwardImplementation(self, inbuf, outbuf):
+        """ return the approximated maximal action for a given state. """
+        outbuf[:] = self.getMaxAction(asarray(inbuf))
+        
+    def getMaxAction(self, state):
+        """ return the approximated maximal action for a given state. """
+        # forward pass in the network
+        self.network.activate(state)
+        # extract maximal action
+        return self.network['action'].outputbuffer[0]
+
+    def getMaxValue(self, state):
+        """ return the value of the maximum action in a certain state. """
+        return self.network.activate(state)
+
+    def getActionValues(self, state):
+        """ This function is not available for continuous action estimators. """
+        raise NotImplementedError
+
