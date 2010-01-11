@@ -8,7 +8,7 @@ class DoublePoleEnvironment(Environment):
     """ two poles to be balanced from the same cart. """
 
     indim = 1
-    ooutdim = 6
+    outdim = 6
 
     def __init__(self):
         self.p1 = CartPoleEnvironment()
