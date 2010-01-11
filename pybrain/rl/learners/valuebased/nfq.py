@@ -41,11 +41,8 @@ class NFQ(ValueBasedLearner):
         
         # train module with backprop/rprop on dataset
         trainer = RPropMinusTrainer(self.module.network, dataset=supervised, batchlearning=True, verbose=False)
-        trainer.trainUntilConvergence(maxEpochs=self.maxEpochs)
+        trainer.trainUntilConvergence(maxEpochs=self.maxEpochs)        
         
         # alternative: backprop, was not as stable as rprop
         # trainer = BackpropTrainer(self.module.network, dataset=supervised, learningrate=0.005, batchlearning=True, verbose=True)
-        # trainer.trainUntilConvergence(maxEpochs=self.maxEpochs)
-        
-
-
+        # trainer.trainUntilConvergence(maxEpochs=200)
