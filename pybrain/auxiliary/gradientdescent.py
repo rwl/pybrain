@@ -61,7 +61,10 @@ class GradientDescent(object):
             rprop_theta = self.rprop_theta
             
             # update parameters 
-            self.values += sign(gradient_arr) * rprop_theta 
+            if self.alpha < 0.:
+                self.values -= sign(gradient_arr) * rprop_theta
+            else:
+                self.values += sign(gradient_arr) * rprop_theta 
 
             # update rprop meta parameters
             dirSwitch = self.lastgradient * gradient_arr
