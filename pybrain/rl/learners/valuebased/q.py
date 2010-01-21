@@ -20,14 +20,17 @@ class Q(ValueBasedLearner):
     def learn(self):
         """ Learn on the current dataset, either for many timesteps and
             even episodes (batchMode = True) or for a single timestep 
-            (batchMode = False). Batch mode is possible, because Q-Learning 
-            is an off-policy method.
+            (batchMode = False). 
 
             In batchMode, the algorithm goes through all the samples in the
             history and performs an update on each of them. if batchMode is
             False, only the last data sample is considered. The user himself
             has to make sure to keep the dataset consistent with the agent's 
             history.
+            
+            Note: batchMode does not mean, that the targets are calculated
+            directly from the returns of the episode, like in Monte-Carlo-RL.
+            The updates are still temporal difference errors.
         """
         if self.batchMode:
             samples = self.dataset

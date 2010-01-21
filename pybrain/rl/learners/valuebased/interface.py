@@ -14,7 +14,7 @@ from random import choice
 
 class ActionValueInterface(object):
     """ Interface for different ActionValue modules, like the
-        ActionValueTable or the ActionValueNetwork. 
+        ActionValueTable or the Actioncriticwork. 
     """
    
     numActions = None
@@ -103,31 +103,58 @@ class PolicyValueNetwork(Module, ActionValueInterface):
     def __init__(self, dimState, dimAction, name=None):
         Module.__init__(self, dimState, dimAction, name)
         
-        ### TODO: possibly 2 seperate networks, because they need to be trained seperately
-        ### (first Q-net, then policy-net)
+        # create policy network
+        self.actor = FeedForwardNetwork()
+        self.actor.addInputModule(LinearLayer(dimState, name='state'))
+        self.actor.addModule(TanhLayer(dimState, name='hidden'))
+        self.actor.addModule(BiasUnit('bias'))
+        self.actor.addOutputModule(TanhLayer(dimAction, name='action'))
         
-        # construct complex network
-        self.network = FeedForwardNetwork()
-        self.network.addInputModule(LinearLayer(dimState, name='state'))
-        self.network.addModule(TanhLayer(dimState, name='policy_hidden'))
-        self.network.addModule(BiasUnit('bias'))
-        self.network.addModule(TanhLayer(dimAction, name='action'))
-        self.network.addModule(TanhLayer(dimState+dimAction, name='value_hidden'))
-        self.network.addOutputModule(TanhLayer(1, name='value'))
+        self.actor.addConnection(FullConnection(self.actor['state'], self.actor['hidden']))
+        self.actor.addConnection(FullConnection(self.actor['bias'], self.actor['hidden']))
+        self.actor.addConnection(FullConnection(self.actor['hidden'], self.actor['action']))
+        self.actor.addConnection(FullConnection(self.actor['bias'], self.actor['action']))
+       
+        self.actor.sortModules()
         
-        # define connections
-        self.network.addConnection(FullConnection(self.network['state'], self.network['policy_hidden']))
-        self.network.addConnection(FullConnection(self.network['bias'], self.network['policy_hidden']))
-        self.network.addConnection(FullConnection(self.network['policy_hidden'], self.network['action']))
-        self.network.addConnection(FullConnection(self.network['bias'], self.network['action']))
-        self.network.addConnection(FullConnection(self.network['state'], self.network['value_hidden']))
-        self.network.addConnection(FullConnection(self.network['action'], self.network['value_hidden']))
-        self.network.addConnection(FullConnection(self.network['bias'], self.network['value_hidden']))
-        self.network.addConnection(FullConnection(self.network['value_hidden'], self.network['value']))
-        self.network.addConnection(FullConnection(self.network['bias'], self.network['value']))
         
-        # sort modules
-        self.network.sortModules()
+        # create value network
+        self.critic = FeedForwardNetwork()
+        self.critic.addInputModule(LinearLayer(dimState+dimAction, name='state_action'))
+        self.critic.addModule(TanhLayer(dimState+dimAction, name='hidden'))
+        self.critic.addModule(BiasUnit('bias'))
+        self.critic.addOutputModule(LinearLayer(1, name='value'))
+        
+        self.critic.addConnection(FullConnection(self.critic['state_action'], self.critic['hidden']))
+        self.critic.addConnection(FullConnection(self.critic['bias'], self.critic['hidden']))
+        self.critic.addConnection(FullConnection(self.critic['hidden'], self.critic['value']))
+        self.critic.addConnection(FullConnection(self.critic['bias'], self.critic['value']))
+        
+        self.critic.sortModules()
+        
+        # 
+        # # construct complex network
+        # self.network = FeedForwardNetwork()
+        # self.network.addInputModule(LinearLayer(dimState, name='state'))
+        # self.network.addModule(TanhLayer(dimState, name='policy_hidden'))
+        # self.network.addModule(BiasUnit('bias'))
+        # self.network.addModule(TanhLayer(dimAction, name='action'))
+        # self.network.addModule(TanhLayer(dimState+dimAction, name='value_hidden'))
+        # self.network.addOutputModule(TanhLayer(1, name='value'))
+        # 
+        # # define connections
+        # self.network.addConnection(FullConnection(self.network['state'], self.network['policy_hidden']))
+        # self.network.addConnection(FullConnection(self.network['bias'], self.network['policy_hidden']))
+        # self.network.addConnection(FullConnection(self.network['policy_hidden'], self.network['action']))
+        # self.network.addConnection(FullConnection(self.network['bias'], self.network['action']))
+        # self.network.addConnection(FullConnection(self.network['state'], self.network['value_hidden']))
+        # self.network.addConnection(FullConnection(self.network['action'], self.network['value_hidden']))
+        # self.network.addConnection(FullConnection(self.network['bias'], self.network['value_hidden']))
+        # self.network.addConnection(FullConnection(self.network['value_hidden'], self.network['value']))
+        # self.network.addConnection(FullConnection(self.network['bias'], self.network['value']))
+        # 
+        # # sort modules
+        # self.network.sortModules()
         
         
     def _forwardImplementation(self, inbuf, outbuf):
@@ -137,13 +164,15 @@ class PolicyValueNetwork(Module, ActionValueInterface):
     def getMaxAction(self, state):
         """ return the approximated maximal action for a given state. """
         # forward pass in the network
-        self.network.activate(state)
-        # extract maximal action
-        return self.network['action'].outputbuffer[0]
+        action = self.actor.activate(state)
+        return action
 
     def getMaxValue(self, state):
         """ return the value of the maximum action in a certain state. """
-        return self.network.activate(state)
+        action = self.actor.activate(state)
+        state_action = r_[state, action]
+        value = self.critic.activate(state_action)
+        return value
 
     def getActionValues(self, state):
         """ This function is not available for continuous action estimators. """
