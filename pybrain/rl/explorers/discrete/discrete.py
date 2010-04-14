@@ -16,7 +16,7 @@ class DiscreteExplorer(Explorer):
         Explorer.__init__(self, 1, 1)
     
     def _setModule(self, module):
-        """ Tells the explorer the module (which has to be ActionValueTable). """
+        """ Tells the explorer the module (which has to be an ActionValueInterface). """
         # removed: cause for circular import
         # assert isinstance(module, ActionValueInterface)
         self._module = module
