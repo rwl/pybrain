@@ -1,6 +1,5 @@
 __author__ = 'Thomas Rueckstiess, ruecksti@in.tum.de'
 
-
 from pybrain.rl.environments.cartpole import CartPoleEnvironment, DiscreteBalanceTask, CartPoleRenderer
 from pybrain.rl.agents import LearningAgent
 from pybrain.rl.experiments import EpisodicExperiment
