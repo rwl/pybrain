@@ -17,7 +17,6 @@ class TrackingRenderer(Renderer):
         self.agent = array([0.0, 0.0])
         self.target = array([0.0, 0.0])
         self.obstacles = obstacles
-        print obstacles
 
         self.stopRequest = False
                 

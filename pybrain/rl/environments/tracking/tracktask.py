@@ -20,7 +20,6 @@ class TrackingTask(EpisodicTask):
         self.N = maxsteps
         self.t = 0
         
-        # scale position and angle, don't scale velocities (unknown maximum)
         # self.sensor_limits = [(0,1), (0,1), (0,1), (0,1)]
         # self.actor_limits = [(0,1), (0,1)]
         
@@ -51,11 +50,11 @@ class ContinuousAbsoluteTrackingTask(TrackingTask):
 
 
 class ContinuousRelativeTrackingTask(TrackingTask):
-    """ action is scaled down (factor 10) and then added to the position of the agent. """
+    """ action is scaled down (factor 20) and then added to the position of the agent. """
     
     def performAction(self, action):
         pos = self.env.getSensors()[-2:].copy()
-        newpos = pos + ((asarray(action)-0.5)*2. / 10.)
+        newpos = pos + ((asarray(action)-0.5)*2. / 20.)
         TrackingTask.performAction(self, newpos)
         
 

@@ -53,7 +53,7 @@ class TrackingEnvironment(GraphicalEnvironment):
         
         # move target along    
         target = [(sin(self.t)+1)/2, (cos(self.t)+1)/2]
-        self.t += 0.05
+        self.t += 0.01
         self.t %= 2*pi
 
         # set new sensors values
