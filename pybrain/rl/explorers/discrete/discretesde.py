@@ -15,9 +15,11 @@ class DiscreteStateDependentExplorer(DiscreteExplorer):
         TODO: currently only implemented for episodes
     """
     
-    def __init__(self, epsilon = 0.2, decay = 0.9998):
+    def __init__(self, epsilon = 0.3, decay = 0.9999):
         DiscreteExplorer.__init__(self)
         self.state = None
+        self.epsilon = epsilon
+        self.decay = decay
     
     def _setModule(self, module):
         """ Tell the explorer the module. """
@@ -40,21 +42,23 @@ class DiscreteStateDependentExplorer(DiscreteExplorer):
         """ Activate the copied module instead of the original and
             feed it with the current state.
         """
-        if random.random() < 0.001:
-            outbuf[:] = array([random.randint(self.module.numActions)])
-        else:
+        if random.random() < self.epsilon:
             outbuf[:] = self.explorerModule.activate(self.state)
+        else:
+            outbuf[:] = self.module.activate(self.state)
+        
+        self.epsilon *= self.decay
     
     def newEpisode(self):
         """ Inform the explorer about the start of a new episode. """
         self.explorerModule = deepcopy(self.module)
-
+        print self.epsilon
+        
         if isinstance(self.explorerModule, ActionValueNetwork):
-
-            self.explorerModule.network.mutationStd = 0.01
-            self.explorerModule.network.mutate()
+            # self.explorerModule.network.mutationStd = self.epsilon
+            self.explorerModule.network.randomize()
 
         elif isinstance(self.explorerModule, ActionValueTable):
-            self.explorerModule.mutationStd = 0.01
+            self.explorerModule.mutationStd = self.epsilon
             self.explorerModule.mutate()
             
