@@ -8,14 +8,14 @@ from pybrain.utilities import drawGibbs
 class BoltzmannExplorer(DiscreteExplorer):
     """ A discrete explorer, that executes the actions with probability 
         that depends on their action values. The boltzmann explorer has 
-        a parameter tau (the temperature). for high tau, the actions are 
-        nearly equiprobable. for tau close to 0, this action selection
+        a parameter epsilon (the temperature). for high epsilon, the actions are 
+        nearly equiprobable. for epsilon close to 0, this action selection
         becomes greedy.
     """
     
-    def __init__(self, tau = 2., decay = 0.9995):
+    def __init__(self, epsilon = 2., decay = 0.9995):
         DiscreteExplorer.__init__(self)
-        self.tau = tau
+        self.epsilon = epsilon
         self.decay = decay
         self._state = None
     
@@ -36,8 +36,8 @@ class BoltzmannExplorer(DiscreteExplorer):
         assert self.module 
         
         values = self.module.getActionValues(self._state)
-        action = drawGibbs(values, self.tau)
+        action = drawGibbs(values, self.epsilon)
         
-        self.tau *= self.decay
+        self.epsilon *= self.decay
         
         outbuf[:] = array([action])

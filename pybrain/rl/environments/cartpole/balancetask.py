@@ -134,7 +134,7 @@ class DiscreteBalanceTask(BalanceTask):
     def getReward(self):
         angles = map(abs, self.env.getPoleAngles())
         s = abs(self.env.getCartPosition())
-        if min(angles) < 0.05: # and abs(s) < 0.05:
+        if min(angles) < 0.05 and abs(s) < 0.05:
             reward = 1.0
         elif max(angles) > 0.7 or abs(s) > 2.4:
             reward = -1. * (self.N - self.t)
@@ -143,15 +143,18 @@ class DiscreteBalanceTask(BalanceTask):
         return reward
 
 
-class DiscreteNoHelpTask(DiscreteBalanceTask):
+class DiscreteJustBalanceTask(DiscreteBalanceTask):
     def getReward(self):
         angles = map(abs, self.env.getPoleAngles())
         s = abs(self.env.getCartPosition())
-        if max(angles) > 0.7 or abs(s) > 2.4:
+        if min(angles) < 0.05:
+            reward = 1.0
+        elif max(angles) > 0.7 or abs(s) > 2.4:
             reward = -1. * (self.N - self.t)
         else: 
-            reward = 0.0
-        return reward   
+            reward = 0
+        return reward  
+
 
 class DiscretePOMDPTask(DiscreteBalanceTask):
     def __init__(self, env=None, maxsteps=1000):

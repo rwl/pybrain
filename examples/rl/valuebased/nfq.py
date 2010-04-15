@@ -1,16 +1,16 @@
 __author__ = 'Thomas Rueckstiess, ruecksti@in.tum.de'
 
-from pybrain.rl.environments.cartpole import CartPoleEnvironment, DiscreteBalanceTask, CartPoleRenderer
+from pybrain.rl.environments.cartpole import CartPoleEnvironment, DiscreteBalanceTask, DiscreteJustBalanceTask, CartPoleRenderer
 from pybrain.rl.agents import LearningAgent
 from pybrain.rl.experiments import EpisodicExperiment
 from pybrain.rl.learners.valuebased import NFQ, ActionValueNetwork
-from pybrain.rl.explorers import BoltzmannExplorer
+from pybrain.rl.explorers import BoltzmannExplorer, DiscreteStateDependentExplorer
 
 from numpy import array, arange, meshgrid, pi, zeros, mean
 from matplotlib import pyplot as plt
 
 # switch this to True if you want to see the cart balancing the pole (slower)
-render = False
+render = True
 
 plt.ion()
 
@@ -22,9 +22,11 @@ if render:
 
 module = ActionValueNetwork(4, 3)
 
-task = DiscreteBalanceTask(env, 100)
-learner = NFQ()
-learner.explorer.epsilon = 0.4
+task = DiscreteJustBalanceTask(env, 200)
+learner = NFQ(maxEpochs=50)
+learner.explorer = BoltzmannExplorer()
+learner.explorer.epsilon = 0.3
+learner.explorer.decay = 0.9997
 
 agent = LearningAgent(module, learner)
 testagent = LearningAgent(module, None)
@@ -46,6 +48,9 @@ while(True):
     experiment.doEpisodes(1)
     agent.learn(1)
     
+    while agent.history.getNumSequences() > 50:
+        agent.history.removeSequence(0)
+    
     # test performance (these real-world experiences are not used for training)
     if render:
         env.delay = True
@@ -63,4 +68,5 @@ while(True):
     print "explorer epsilon", learner.explorer.epsilon
     print "num episodes", agent.history.getNumSequences()
     print "update step", len(performance)
+    print "-------------------------------"
     
