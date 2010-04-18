@@ -72,7 +72,7 @@ class ActionValueNetwork(Module, ActionValueInterface):
         
     def __init__(self, dimState, numActions, name=None):
         Module.__init__(self, dimState, 1, name)
-        self.network = buildNetwork(dimState + numActions, dimState + numActions, 1)
+        self.network = buildNetwork(dimState + numActions, dimState + numActions, 1, outclass=LinearLayer)
         self.numActions = numActions
     
     def _forwardImplementation(self, inbuf, outbuf):

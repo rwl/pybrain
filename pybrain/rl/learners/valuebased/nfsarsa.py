@@ -7,8 +7,8 @@ from pybrain.supervised.trainers import BackpropTrainer
 from pybrain.utilities import one_to_n
 
 
-class NFQ(ValueBasedLearner):
-    """ Neuro-fitted Q-learning"""
+class NFSARSA(ValueBasedLearner):
+    """ Neuro-fitted SARSA. """
     
     def __init__(self, maxEpochs=100):
         ValueBasedLearner.__init__(self)
@@ -43,7 +43,7 @@ class NFQ(ValueBasedLearner):
                 (state, action, reward) = nextexperience
                 
                 inp = r_[state_, one_to_n(action_[0], self.module.numActions)]
-                tgt = Q + self.alpha*(reward_ + self.gamma * max(self.module.getActionValues(state)) - Q)
+                tgt = Q + self.alpha*(reward_ + self.gamma * self.module.getValue(state, action[0]) - Q)
                 
                 supervised.addSample(inp, tgt)
                 
