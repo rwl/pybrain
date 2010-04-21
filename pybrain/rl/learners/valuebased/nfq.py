@@ -12,14 +12,14 @@ class NFQ(ValueBasedLearner):
     
     def __init__(self, maxEpochs=100):
         ValueBasedLearner.__init__(self)
-        self.gamma = 0.9
+        self.gamma = 1.0
         self.alpha = 1.0
         self.maxEpochs = maxEpochs
     
     def learn(self):
         # convert reinforcement dataset to NFQ supervised dataset
         supervised = SupervisedDataSet(self.module.network.indim, 1)
-        self.dataset['reward'][-1] = -1.
+
         for si in range(self.dataset.getNumSequences()):
             nextexperience = None
             seq = self.dataset.getSequenceIterator(si, reverse=True)
@@ -44,13 +44,13 @@ class NFQ(ValueBasedLearner):
                 
                 inp = r_[state_, one_to_n(action_[0], self.module.numActions)]
                 tgt = Q + self.alpha*(reward_ + self.gamma * max(self.module.getActionValues(state)) - Q)
-                
                 supervised.addSample(inp, tgt)
                 
                 # update last experience with current one
                 nextexperience = (state_, action_, reward_)
-        
+
         # train module with backprop/rprop on dataset
+        # print supervised
         trainer = RPropMinusTrainer(self.module.network, dataset=supervised, batchlearning=True, verbose=False)
         trainer.trainUntilConvergence(maxEpochs=self.maxEpochs)        
         
