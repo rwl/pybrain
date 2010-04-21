@@ -12,7 +12,6 @@ from matplotlib import pyplot as plt
 
 render = False
 
-
 plt.ion()
 
 env = CartPoleEnvironment()
@@ -23,8 +22,9 @@ if render:
 
 module = PolicyValueNetwork(4, 1)
 
-task = JustBalanceTask(env, 50)
+task = JustBalanceTask(env, 200)
 learner = NFQCA()
+learner.explorer = None
 learner.explorer = NormalExplorer(1)
 
 agent = LearningAgent(module, learner)
@@ -40,27 +40,27 @@ def plotPerformance(values, fig):
 
 performance = []
 
-pf_fig = plt.figure()
+if not render:
+    pf_fig = plt.figure()
 
 # experiment.doEpisodes(50)
     
 while(True):
     experiment.doEpisodes(10)
-
-    # while agent.history.getNumSequences() > 100:
-    #     agent.history.removeSequence(0)
-        
     agent.learn(1)  
     
     # test performance
     if render:
         env.delay = True
     experiment.agent = testagent
-    r = mean([sum(x) for x in experiment.doEpisodes(20)])
-    env.delay = False  
+    r = mean([sum(x) for x in experiment.doEpisodes(10)])
+    env.delay = False
+    testagent.reset()
+    experiment.agent = agent  
 
     performance.append(r) 
-    plotPerformance(performance, pf_fig)
+    if not render:
+        plotPerformance(performance, pf_fig)
     print "reward avg", r
     # print "exploration", agent.learner.explorer.epsilon
     print "num samples", agent.history.getNumSequences()
