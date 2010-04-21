@@ -13,7 +13,7 @@ class NFQCA(ValueBasedLearner):
     def __init__(self):
         ValueBasedLearner.__init__(self)
         self.descent = GradientDescent()
-        self.descent.alpha = -0.1  # we want ascend, not descend
+        self.descent.alpha = 0.05 # should this be negative? we want ascend, not descend
         self.descent.rprop = False
         
         self.gamma = 0.9
@@ -40,34 +40,38 @@ class NFQCA(ValueBasedLearner):
         critic_ds = SupervisedDataSet(self.module.critic.indim, 1)
         
         # create critic training dataset
-        for seq in self.dataset:
-            lastexperience = None
-            for state, action, reward in seq:
-                if not lastexperience:
+        for si in range(self.dataset.getNumSequences()):
+            nextexperience = None
+            seq = self.dataset.getSequenceIterator(si, reverse=True)
+
+            for i, (state_, action_, reward_) in enumerate(seq):
+                # calculate Q value for time t (not t+1)
+                Q = self.module.critic.activate(r_[state_, action_])
+
+                if not nextexperience:
+                    # handle last s,a,r tuple by only using r as target
+                    # inp = r_[state_, action_]
+                    # tgt = reward_
+                    # critic_ds.addSample(inp, tgt)
+
                     # delay each experience in sequence by one
-                    lastexperience = (state, action, reward)
+                    nextexperience = (state_, action_, reward_)
                     continue
-                
+
                 # use experience from last timestep to do Q update
-                (state_, action_, reward_) = lastexperience
-                
-                # current value (forward pass)
-                Q = self.module.getMaxValue(state_)
-                print Q
+                (state, action, reward) = nextexperience
+
                 inp = r_[state_, action_]
                 tgt = Q + self.alpha*(reward_ + self.gamma * self.module.getMaxValue(state) - Q)
                 critic_ds.addSample(inp, tgt)
-                
+
                 # update last experience with current one
-                lastexperience = (state, action, reward)
+                nextexperience = (state_, action_, reward_)
 
-        # train actor network with rprop (maybe backprop until convergence?)
-        # trainer = RPropMinusTrainer(self.module.critic, dataset=critic_ds, batchlearning=True, verbose=True)
-        # trainer.trainEpochs(100)
-
-        # train critic network with backprop until convergence
-        trainer = BackpropTrainer(self.module.critic, dataset=critic_ds, learningrate=0.001, batchlearning=True, verbose=True)
-        trainer.trainUntilConvergence(maxEpochs=300)
+        # train module with backprop/rprop on dataset
+        trainer = RPropMinusTrainer(self.module.critic, dataset=critic_ds, batchlearning=True, verbose=True)
+        trainer.trainUntilConvergence(maxEpochs=100)
+        print trainer.descent.alpha       
         
         
         sumQ = 0.
@@ -78,15 +82,17 @@ class NFQCA(ValueBasedLearner):
         print "before training:", sumQ
         
         # calculate actor gradient
-        for i in range(100):
+        for i in range(20):
             self.module.actor.reset()
             self.module.actor.resetDerivatives()
             for seq in self.dataset:
                 for state, action, reward in seq:
+                    # propagate state forward through actor and state+action through critic
                     Q = self.module.getMaxValue(state)
-                    dQdP = self.module.critic.backActivate(Q)
+                    # backpropagate "1" through critic to get partial derivatives
+                    dQdP = self.module.critic.backActivate(1)
                     self.module.actor.backActivate(dQdP[-self.module.actor.outdim:])
-            
+                    # print self.module.actor.derivs
             self.module.actor._setParameters(self.descent(self.module.actor.derivs))
           
             sumQ = 0.
