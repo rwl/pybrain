@@ -103,7 +103,7 @@ class PolicyValueNetwork(Module, ActionValueInterface):
     def __init__(self, dimState, dimAction, name=None):
         Module.__init__(self, dimState, dimAction, name)
         
-        # create policy network
+        # create policy network "actor"
         self.actor = FeedForwardNetwork()
         self.actor.addInputModule(LinearLayer(dimState, name='state'))
         self.actor.addModule(TanhLayer(dimState, name='hidden'))
@@ -118,7 +118,7 @@ class PolicyValueNetwork(Module, ActionValueInterface):
         self.actor.sortModules()
         
         
-        # create value network
+        # create value network "critic"
         self.critic = FeedForwardNetwork()
         self.critic.addInputModule(LinearLayer(dimState+dimAction, name='state_action'))
         self.critic.addModule(TanhLayer(dimState+dimAction, name='hidden'))
@@ -131,30 +131,6 @@ class PolicyValueNetwork(Module, ActionValueInterface):
         self.critic.addConnection(FullConnection(self.critic['bias'], self.critic['value']))
         
         self.critic.sortModules()
-        
-        # 
-        # # construct complex network
-        # self.network = FeedForwardNetwork()
-        # self.network.addInputModule(LinearLayer(dimState, name='state'))
-        # self.network.addModule(TanhLayer(dimState, name='policy_hidden'))
-        # self.network.addModule(BiasUnit('bias'))
-        # self.network.addModule(TanhLayer(dimAction, name='action'))
-        # self.network.addModule(TanhLayer(dimState+dimAction, name='value_hidden'))
-        # self.network.addOutputModule(TanhLayer(1, name='value'))
-        # 
-        # # define connections
-        # self.network.addConnection(FullConnection(self.network['state'], self.network['policy_hidden']))
-        # self.network.addConnection(FullConnection(self.network['bias'], self.network['policy_hidden']))
-        # self.network.addConnection(FullConnection(self.network['policy_hidden'], self.network['action']))
-        # self.network.addConnection(FullConnection(self.network['bias'], self.network['action']))
-        # self.network.addConnection(FullConnection(self.network['state'], self.network['value_hidden']))
-        # self.network.addConnection(FullConnection(self.network['action'], self.network['value_hidden']))
-        # self.network.addConnection(FullConnection(self.network['bias'], self.network['value_hidden']))
-        # self.network.addConnection(FullConnection(self.network['value_hidden'], self.network['value']))
-        # self.network.addConnection(FullConnection(self.network['bias'], self.network['value']))
-        # 
-        # # sort modules
-        # self.network.sortModules()
         
         
     def _forwardImplementation(self, inbuf, outbuf):
@@ -173,7 +149,7 @@ class PolicyValueNetwork(Module, ActionValueInterface):
         state_action = r_[state, action]
         value = self.critic.activate(state_action)
         return value
-
+            
     def getActionValues(self, state):
         """ This function is not available for continuous action estimators. """
         raise NotImplementedError
