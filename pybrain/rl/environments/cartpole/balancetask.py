@@ -31,7 +31,7 @@ class BalanceTask(EpisodicTask):
         
         # self.sensor_limits = [None] * 4
         # actor between -10 and 10 Newton
-        self.actor_limits = [(-50, 50)]
+        self.actor_limits = [(-10, 10)]
         
     def reset(self):
         EpisodicTask.reset(self)
@@ -135,11 +135,11 @@ class DiscreteBalanceTask(BalanceTask):
         angles = map(abs, self.env.getPoleAngles())
         s = abs(self.env.getCartPosition())
         if min(angles) < 0.05 and abs(s) < 0.05:
-            reward = 1.0
+            reward = 0.0
         elif max(angles) > 0.7 or abs(s) > 2.4:
-            reward = -1. * (self.N - self.t)
+            reward = -2. * (self.N - self.t)
         else: 
-            reward = 0
+            reward = -1.
         return reward
 
 
@@ -148,11 +148,11 @@ class DiscreteJustBalanceTask(DiscreteBalanceTask):
         angles = map(abs, self.env.getPoleAngles())
         s = abs(self.env.getCartPosition())
         if min(angles) < 0.05:
-            reward = 1.0
+            reward = 0.
         elif max(angles) > 0.7 or abs(s) > 2.4:
-            reward = -1. * (self.N - self.t)
+            reward = -2. * (self.N - self.t)
         else: 
-            reward = 0
+            reward = -1.
         return reward  
 
 
