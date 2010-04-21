@@ -1,4 +1,4 @@
-from scipy import r_
+from scipy import r_, zeros
 
 from pybrain.rl.learners.valuebased.valuebased import ValueBasedLearner
 from pybrain.datasets import SupervisedDataSet
@@ -14,7 +14,7 @@ class NFQLambda(ValueBasedLearner):
         ValueBasedLearner.__init__(self)
         self.gamma = 0.9
         self.qlambda = qlambda
-        self.alpha = 1.0
+        self.alpha = 0.5
         self.maxEpochs = maxEpochs
     
     def learn(self):
@@ -22,7 +22,11 @@ class NFQLambda(ValueBasedLearner):
         supervised = SupervisedDataSet(self.module.network.indim, 1)
 
         for si in range(self.dataset.getNumSequences()):
-            for cutoff in range(self.dataset.getSequenceLength(si)):
+            sequence_length = self.dataset.getSequenceLength(si)
+            targetcollector = zeros(sequence_length)
+            targetcounter = zeros(sequence_length)
+            
+            for cutoff in range(sequence_length):
                 nextexperience = None
                 seq = self.dataset.getSequenceIterator(si, reverse=True)
                 for i, (state_, action_, reward_) in enumerate(seq):
@@ -47,25 +51,39 @@ class NFQLambda(ValueBasedLearner):
                         continue
                 
                     eligibility = (self.gamma * self.qlambda) ** (i-cutoff-1)
+                    
                     if i > 20 or eligibility < 0.01:
                         break
                             
                     # use experience from last timestep to do Q update
                     (state, action, reward) = nextexperience
                     
-                    Q = self.module.getValue(state_, action_[0])
+                    # Q = self.module.getValue(state_, action_[0])
                     
                     if i-cutoff == 1:
                         # calculate delta only once for full inner loop
-                        delta = reward_ + self.gamma*max(self.module.getActionValues(state)) - Q
-                
-                    inp = r_[state_, one_to_n(action_[0], self.module.numActions)]
-                    tgt = Q + self.alpha * delta * eligibility
-                    supervised.addSample(inp, tgt)
+                        delta = reward_ + self.gamma*max(self.module.getActionValues(state))
+                    
+                    tgt = delta * eligibility
+                    
+                    # collect intermediate Q updates
+                    targetcollector[sequence_length-i-1] += tgt
+                    # targetcounter[sequence_length-i-1] += 1
 
                     # update last experience with current one
                     nextexperience = (state_, action_, reward_)
-        
+            
+            # now create condensed supervised dataset sample, one for each state in seq
+            seq = self.dataset.getSequenceIterator(si, reverse=False)
+            for i, (state_, action_, reward_) in enumerate(seq):
+                if i == sequence_length - 1:
+                    break
+                Q = self.module.getValue(state_, action_[0])
+                inp = r_[state_, one_to_n(action_[0], self.module.numActions)]
+                tgt = (1-self.alpha) * Q + self.alpha * targetcollector[i] # / targetcounter[i]
+                supervised.addSample(inp, tgt)
+                # print tgt
+                
         # train module with backprop/rprop on dataset
         trainer = RPropMinusTrainer(self.module.network, dataset=supervised, batchlearning=True, verbose=False)
         trainer.trainUntilConvergence(maxEpochs=self.maxEpochs)        
