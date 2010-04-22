@@ -12,7 +12,7 @@ class NFQ(ValueBasedLearner):
     
     def __init__(self, maxEpochs=100):
         ValueBasedLearner.__init__(self)
-        self.gamma = 1.0
+        self.gamma = 0.9
         self.alpha = 1.0
         self.maxEpochs = maxEpochs
     
