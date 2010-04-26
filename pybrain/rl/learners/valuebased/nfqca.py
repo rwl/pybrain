@@ -6,6 +6,8 @@ from pybrain.supervised.trainers import RPropMinusTrainer, BackpropTrainer
 from pybrain.rl.explorers.continuous.normal import NormalExplorer
 from pybrain.auxiliary.gradientdescent import GradientDescent
 
+from numpy import *
+from matplotlib import pyplot as plt
 
 class NFQCA(ValueBasedLearner):
     """ Neuro-fitted Q-learning for continuous actions"""
@@ -13,8 +15,8 @@ class NFQCA(ValueBasedLearner):
     def __init__(self):
         ValueBasedLearner.__init__(self)
         self.descent = GradientDescent()
-        self.descent.alpha = 0.05 # should this be negative? we want ascend, not descend
-        self.descent.rprop = False
+        self.descent.alpha = 1.0 # should this be negative? we want ascend, not descend
+        self.descent.rprop = True
         
         self.gamma = 0.9
         self.alpha = 0.5
@@ -70,7 +72,7 @@ class NFQCA(ValueBasedLearner):
 
         # train module with backprop/rprop on dataset
         trainer = RPropMinusTrainer(self.module.critic, dataset=critic_ds, batchlearning=True, verbose=True)
-        trainer.trainUntilConvergence(maxEpochs=100)
+        trainer.trainUntilConvergence(maxEpochs=50)
         print trainer.descent.alpha       
         
         
@@ -82,24 +84,28 @@ class NFQCA(ValueBasedLearner):
         print "before training:", sumQ
         
         # calculate actor gradient
-        for i in range(20):
+        for i in range(50):
             self.module.actor.reset()
             self.module.actor.resetDerivatives()
+            self.module.critic.reset()
+            self.module.critic.resetDerivatives()
+            
             for seq in self.dataset:
                 for state, action, reward in seq:
+                    # print self.module.actor.derivs
                     # propagate state forward through actor and state+action through critic
                     Q = self.module.getMaxValue(state)
                     # backpropagate "1" through critic to get partial derivatives
-                    dQdP = self.module.critic.backActivate(1)
+                    dQdP = self.module.critic.backActivate(array([1]))
                     self.module.actor.backActivate(dQdP[-self.module.actor.outdim:])
-                    # print self.module.actor.derivs
+
             self.module.actor._setParameters(self.descent(self.module.actor.derivs))
-          
             sumQ = 0.
             for seq in self.dataset:
                 for state, action, reward in seq:
                     Q = self.module.getMaxValue(state)
                     sumQ += Q
             print "after training:", sumQ
+            print "derivs", self.module.actor.derivs
             
         
