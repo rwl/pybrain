@@ -15,8 +15,8 @@ class NFQCA(ValueBasedLearner):
     def __init__(self):
         ValueBasedLearner.__init__(self)
         self.descent = GradientDescent()
-        self.descent.alpha = 1.0 # should this be negative? we want ascend, not descend
-        self.descent.rprop = True
+        self.descent.alpha = 0.01
+        self.descent.rprop = False
         
         self.gamma = 0.9
         self.alpha = 0.5
@@ -62,7 +62,7 @@ class NFQCA(ValueBasedLearner):
 
                 # use experience from last timestep to do Q update
                 (state, action, reward) = nextexperience
-
+                
                 inp = r_[state_, action_]
                 tgt = Q + self.alpha*(reward_ + self.gamma * self.module.getMaxValue(state) - Q)
                 critic_ds.addSample(inp, tgt)
@@ -84,7 +84,10 @@ class NFQCA(ValueBasedLearner):
         print "before training:", sumQ
         
         # calculate actor gradient
-        for i in range(50):
+        self.module.actor.randomize()
+        self.descent.init(self.module.actor.params)
+        
+        for i in range(10):
             self.module.actor.reset()
             self.module.actor.resetDerivatives()
             self.module.critic.reset()
@@ -100,12 +103,13 @@ class NFQCA(ValueBasedLearner):
                     self.module.actor.backActivate(dQdP[-self.module.actor.outdim:])
 
             self.module.actor._setParameters(self.descent(self.module.actor.derivs))
+            
             sumQ = 0.
             for seq in self.dataset:
                 for state, action, reward in seq:
                     Q = self.module.getMaxValue(state)
                     sumQ += Q
             print "after training:", sumQ
-            print "derivs", self.module.actor.derivs
+            # print "derivs", self.module.actor.derivs
             
         

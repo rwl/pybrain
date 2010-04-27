@@ -6,7 +6,6 @@ from lstm import LSTMLayer
 from mdlstm import MDLSTMLayer
 from mdrnnlayer import MdrnnLayer
 from sigmoidlayer import SigmoidLayer
-from softsign import SoftSignLayer
 from softmax import SoftmaxLayer, PartialSoftmaxLayer
 from statedependentlayer import StateDependentLayer
 from tanhlayer import TanhLayer

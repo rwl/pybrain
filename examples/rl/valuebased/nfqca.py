@@ -22,10 +22,10 @@ if render:
 
 module = PolicyValueNetwork(4, 1)
 
-task = JustBalanceTask(env, 200)
+task = JustBalanceTask(env, 100)
 learner = NFQCA()
 learner.explorer = None
-learner.explorer = NormalExplorer(1)
+learner.explorer = NormalExplorer(1, -1.0)
 
 agent = LearningAgent(module, learner)
 testagent = LearningAgent(module, None)
@@ -46,7 +46,7 @@ if not render:
 # experiment.doEpisodes(50)
     
 while(True):
-    experiment.doEpisodes(10)
+    experiment.doEpisodes(1)
     agent.learn(1)  
     
     # test performance
@@ -64,5 +64,6 @@ while(True):
     print "reward avg", r
     # print "exploration", agent.learner.explorer.epsilon
     print "num samples", agent.history.getNumSequences()
+    print "num samples", len(agent.history)
     # agent.reset()
     
