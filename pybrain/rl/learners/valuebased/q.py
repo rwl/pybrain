@@ -16,6 +16,7 @@ class Q(ValueBasedLearner):
 
         self.laststate = None
         self.lastaction = None
+        self.lastreward = None
 
     def learn(self):
         """ Learn on the current dataset, either for many timesteps and
@@ -47,13 +48,15 @@ class Q(ValueBasedLearner):
                 if self.laststate == None:
                     self.lastaction = action
                     self.laststate = state
+                    self.lastreward = reward
                     continue
 
                 qvalue = self.module.getValue(self.laststate, self.lastaction)
                 maxnext = self.module.getValue(state, self.module.getMaxAction(state))
-                self.module.updateValue(self.laststate, self.lastaction, qvalue + self.alpha * (reward + self.gamma * maxnext - qvalue))
+                self.module.updateValue(self.laststate, self.lastaction, qvalue + self.alpha * (self.lastreward + self.gamma * maxnext - qvalue))
 
                 # move state to oldstate
                 self.laststate = state
                 self.lastaction = action
+                self.lastreward = reward
 
