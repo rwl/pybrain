@@ -181,10 +181,10 @@ class MultilinePlotter:
         self.replot = False
 
 
-    def show(self, xLabel='', yLabel='', title='', popup=False, imgfile=None):
+    def show(self, xLabel='', yLabel='', plt_title='', popup=False, imgfile=None):
         """ Plots the data internally and saves an image of it to the plotting directory.
         
-    :key title: The title of the plot.
+    :key plt_title: The title of the plot.
     :key xLable: The label for the x-axis
     :key yLable: The label for the y-axis
     :key popup: also produce a popup window with the image?"""
@@ -193,7 +193,7 @@ class MultilinePlotter:
             plot(self.indexList[i], self.dataList[i])
         xlabel(xLabel)
         ylabel(yLabel)
-        title(title)
+        title(plt_title)
         if imgfile == None:
             imgfile = imp.find_module('pybrain')[1] + "/tools/plotting/plot.png"
         savefig(imgfile)
