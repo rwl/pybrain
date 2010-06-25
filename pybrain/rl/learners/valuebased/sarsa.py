@@ -23,6 +23,7 @@ class SARSA(ValueBasedLearner):
     
         self.laststate = None
         self.lastaction = None
+        self.lastreward = None
 
     def learn(self):
         if self.batchMode:
@@ -40,13 +41,15 @@ class SARSA(ValueBasedLearner):
                 if self.laststate == None:
                     self.lastaction = action
                     self.laststate = state
+                    self.lastreward = reward
                     continue
         
                 qvalue = self.module.getValue(self.laststate, self.lastaction)
                 qnext = self.module.getValue(state, action)
-                self.module.updateValue(self.laststate, self.lastaction, qvalue + self.alpha * (reward + self.gamma * qnext - qvalue))
+                self.module.updateValue(self.laststate, self.lastaction, qvalue + self.alpha * (self.lastreward + self.gamma * qnext - qvalue))
         
                 # move state to oldstate
                 self.laststate = state
                 self.lastaction = action
+                self.lastreward = reward
 
