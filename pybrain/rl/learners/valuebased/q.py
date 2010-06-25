@@ -4,30 +4,30 @@ from pybrain.rl.learners.valuebased.valuebased import ValueBasedLearner
 
 
 class Q(ValueBasedLearner):
-    
+
     offPolicy = True
     batchMode = True
-    
+
     def __init__(self, alpha=0.5, gamma=0.99):
         ValueBasedLearner.__init__(self)
-        
+
         self.alpha = alpha
         self.gamma = gamma
-    
+
         self.laststate = None
         self.lastaction = None
-    
+
     def learn(self):
         """ Learn on the current dataset, either for many timesteps and
-            even episodes (batchMode = True) or for a single timestep 
-            (batchMode = False). 
+            even episodes (batchMode = True) or for a single timestep
+            (batchMode = False).
 
             In batchMode, the algorithm goes through all the samples in the
             history and performs an update on each of them. if batchMode is
             False, only the last data sample is considered. The user himself
-            has to make sure to keep the dataset consistent with the agent's 
+            has to make sure to keep the dataset consistent with the agent's
             history.
-            
+
             Note: batchMode does not mean, that the targets are calculated
             directly from the returns of the episode, like in Monte-Carlo-RL.
             The updates are still temporal difference errors.
@@ -39,20 +39,20 @@ class Q(ValueBasedLearner):
 
         for seq in samples:
             for state, action, reward in seq:
-                
+
                 state = int(state)
                 action = int(action)
-        
+
                 # first learning call has no last state: skip
                 if self.laststate == None:
                     self.lastaction = action
                     self.laststate = state
                     continue
-        
+
                 qvalue = self.module.getValue(self.laststate, self.lastaction)
                 maxnext = self.module.getValue(state, self.module.getMaxAction(state))
                 self.module.updateValue(self.laststate, self.lastaction, qvalue + self.alpha * (reward + self.gamma * maxnext - qvalue))
-        
+
                 # move state to oldstate
                 self.laststate = state
                 self.lastaction = action
