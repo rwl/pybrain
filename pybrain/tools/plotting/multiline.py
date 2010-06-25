@@ -148,7 +148,7 @@ class MultilinePlotter:
                 
         # set as new default linestyle
         if kwargs.has_key('color'):
-            kwargs.popitem('color')
+            kwargs.pop('color')
         self.defaultLineStyle = kwargs
         
             
