@@ -176,7 +176,8 @@ class MultilinePlotter:
             self.Axes.set_ylim(tuple(yr))
             #self.Axes.draw()
         #pylab.show()
-        draw_if_interactive()
+        if isinteractive():
+            draw()
         self.replot = False
 
 
