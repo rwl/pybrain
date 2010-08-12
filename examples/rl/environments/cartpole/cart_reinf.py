@@ -1,11 +1,11 @@
 #########################################################################
-# Reinforcement Learning with REINFORCE on the CartPoleEnvironment 
+# Reinforcement Learning with REINFORCE on the CartPoleEnvironment
 #
 # Requirements: pylab (for plotting only). If not available, comment the
 # last 3 lines out
 #########################################################################
 __author__ = "Thomas Rueckstiess, Frank Sehnke"
-__version__ = '$Id$' 
+__version__ = '$Id$'
 
 from pybrain.tools.example_tools import ExTools
 from pybrain.tools.shortcuts import buildNetwork
@@ -22,7 +22,7 @@ et = ExTools(batch, prnts, kind = "learner") #tool for printing and plotting
 
 for runs in range(numbExp):
     # create environment
-    env = CartPoleEnvironment()    
+    env = CartPoleEnvironment()
     # create task
     task = BalanceTask(env, 200, desiredValue=None)
     # create controller network
@@ -37,6 +37,10 @@ for runs in range(numbExp):
     for updates in range(epis):
         for i in range(prnts):
             experiment.doEpisodes(batch)
+
+            agent.learn()
+            agent.reset()
+
         state, action, reward = agent.learner.dataset.getSequence(agent.learner.dataset.getNumSequences()-1)
         et.printResults(reward.sum(), runs, updates)
     et.addExps()
